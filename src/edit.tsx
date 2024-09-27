@@ -71,12 +71,17 @@ function Editor({ path }: { path: string }) {
   // console.log('aaa');
 
   const [fileContents, setFileContents] = useState('');
+  const [isNewFile, setIsNewFile] = useState(false);
 
   useEffect(() => {
     readFile(path, 'utf8')
       .then((v) => {
         setFileContents(v);
         if (inputRef.current) inputRef.current.value = v;
+      })
+      .catch((err) => {
+        // probably enoent
+        setIsNewFile(true);
       });
   }, [path]);
 
@@ -98,32 +103,37 @@ function Editor({ path }: { path: string }) {
   const theme = 'dark';
 
   return (
-    <xjoin flexGrow>
-      <para width={3} textAlign="end" invert ref={linesRef} pad={linesPad}>{Array.from({ length: fileContents.split('\n').length }, (_, i) => `${i}`).join('\n')}</para>
-      {/* <para width={1} fillChar="|"></para> */}
-      <zjoin flexGrow>
-        <input
-          ref={inputRef}
-          autofocus
-          multiline
-          onChange={setFileContents}
-          onScroll={(scroll) => {
-            setTextPad(actualTextRef.current!.attributes.pad = [-scroll[0], 0, 0, -scroll[1]]);
-            setLinesPad(linesRef.current!.attributes.pad = [-scroll[0], 0, 0, 0]);
-          }}
-        />
-        <cont fillChar=".">
-          <para ref={actualTextRef} pad={textPad}>
-            {fileContents}
-          </para>
-        </cont>
-        <cont fillChar={"\x09"}>
-          <para ref={actualTextRef} pad={textPad}>
-            <Visit code={html} sheet={sheets[theme]} />
-          </para>
-        </cont>
-      </zjoin>
-    </xjoin>
+    <yjoin widthAlign="stretch">
+      <para bg={7} fg={0} textAlign='middle' pad={[0, 1]}>Text editor{isNewFile ? ' (New file)' : ''}</para>
+      <cont flexGrow pad={[1, 2]} bg={4}>
+        <xjoin pad={1} bg={0}>
+          <para width={3} textAlign="end" invert ref={linesRef} pad={linesPad}>{Array.from({ length: fileContents.split('\n').length }, (_, i) => `${i}`).join('\n')}</para>
+          {/* <para width={1} fillChar="|"></para> */}
+          <zjoin flexGrow>
+            <input
+              ref={inputRef}
+              autofocus
+              multiline
+              onChange={setFileContents}
+              onScroll={(scroll) => {
+                setTextPad(actualTextRef.current!.attributes.pad = [-scroll[0], 0, 0, -scroll[1]]);
+                setLinesPad(linesRef.current!.attributes.pad = [-scroll[0], 0, 0, 0]);
+              }}
+            />
+            <cont fillChar=".">
+              <para ref={actualTextRef} pad={textPad}>
+                {fileContents}
+              </para>
+            </cont>
+            <cont fillChar={"\x09"}>
+              <para ref={actualTextRef} pad={textPad}>
+                <Visit code={html} sheet={sheets[theme]} />
+              </para>
+            </cont>
+          </zjoin>
+        </xjoin>
+      </cont>
+    </yjoin>
   );
 }
 

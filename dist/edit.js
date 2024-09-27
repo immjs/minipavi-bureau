@@ -54,12 +54,17 @@ function Editor({ path }) {
     const inputRef = useRef(null);
     // console.log('aaa');
     const [fileContents, setFileContents] = useState('');
+    const [isNewFile, setIsNewFile] = useState(false);
     useEffect(() => {
         readFile(path, 'utf8')
             .then((v) => {
             setFileContents(v);
             if (inputRef.current)
                 inputRef.current.value = v;
+        })
+            .catch((err) => {
+            // probably enoent
+            setIsNewFile(true);
         });
     }, [path]);
     const navigate = useNavigate();
@@ -76,10 +81,10 @@ function Editor({ path }) {
     // Returns a highlighted HTML string
     const html = lowlight.highlightAuto(fileContents);
     const theme = 'dark';
-    return (_jsxs("xjoin", { flexGrow: true, children: [_jsx("para", { width: 3, textAlign: "end", invert: true, ref: linesRef, pad: linesPad, children: Array.from({ length: fileContents.split('\n').length }, (_, i) => `${i}`).join('\n') }), _jsxs("zjoin", { flexGrow: true, children: [_jsx("input", { ref: inputRef, autofocus: true, multiline: true, onChange: setFileContents, onScroll: (scroll) => {
-                            setTextPad(actualTextRef.current.attributes.pad = [-scroll[0], 0, 0, -scroll[1]]);
-                            setLinesPad(linesRef.current.attributes.pad = [-scroll[0], 0, 0, 0]);
-                        } }), _jsx("cont", { fillChar: ".", children: _jsx("para", { ref: actualTextRef, pad: textPad, children: fileContents }) }), _jsx("cont", { fillChar: "\x09", children: _jsx("para", { ref: actualTextRef, pad: textPad, children: _jsx(Visit, { code: html, sheet: sheets[theme] }) }) })] })] }));
+    return (_jsxs("yjoin", { widthAlign: "stretch", children: [_jsxs("para", { bg: 7, fg: 0, textAlign: 'middle', pad: [0, 1], children: ["Text editor", isNewFile ? ' (New file)' : ''] }), _jsx("cont", { flexGrow: true, pad: [1, 2], bg: 4, children: _jsxs("xjoin", { pad: 1, bg: 0, children: [_jsx("para", { width: 3, textAlign: "end", invert: true, ref: linesRef, pad: linesPad, children: Array.from({ length: fileContents.split('\n').length }, (_, i) => `${i}`).join('\n') }), _jsxs("zjoin", { flexGrow: true, children: [_jsx("input", { ref: inputRef, autofocus: true, multiline: true, onChange: setFileContents, onScroll: (scroll) => {
+                                        setTextPad(actualTextRef.current.attributes.pad = [-scroll[0], 0, 0, -scroll[1]]);
+                                        setLinesPad(linesRef.current.attributes.pad = [-scroll[0], 0, 0, 0]);
+                                    } }), _jsx("cont", { fillChar: ".", children: _jsx("para", { ref: actualTextRef, pad: textPad, children: fileContents }) }), _jsx("cont", { fillChar: "\x09", children: _jsx("para", { ref: actualTextRef, pad: textPad, children: _jsx(Visit, { code: html, sheet: sheets[theme] }) }) })] })] }) })] }));
 }
 export function Edit() {
     const params = new URLSearchParams(useLocation().search);
