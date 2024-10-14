@@ -15,7 +15,14 @@ export default createMinipaviHandler(
     }, 10_000);
     stream.on('end', () => clearInterval(interval));
 
-    render(<App />, minitel);
+    const query = new URL(ws.url).searchParams;
+    if (query.has('mirroring')) {
+      const mirroring = query.get('mirroring');
+
+      render(<MirrorSecondary />, minitel);
+    } else {
+      render(<App />, minitel);
+    }
   },
   {
     host: '0.0.0.0',

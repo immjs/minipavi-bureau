@@ -1,10 +1,10 @@
 import { Dispatch, SetStateAction } from "react";
 interface WindowContext {
-    id: number;
+    setWindowName: (windowName: string) => void;
 }
 export declare const windowContext: import("react").Context<WindowContext>;
 interface WindowData {
-    url: string;
+    name: string;
     id: number;
     visible: boolean;
 }

@@ -1,5 +1,5 @@
 import { common, createLowlight } from 'lowlight';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import type { FullPadding } from 'minitel-standalone/dist/types.js';
 import { Input, Paragraph } from 'minitel-standalone';
 
@@ -10,6 +10,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { createId } from '@paralleldrive/cuid2';
 import { readFile, writeFile } from 'fs/promises';
 import { useKeyboard } from 'minitel-react';
+import { windowContext } from './app.js';
 
 const lowlight = createLowlight(common);
 
@@ -63,6 +64,9 @@ export function Visit({ code, sheet }: { code: (HastElement | HastText | HastCom
 }
 
 function Editor({ path }: { path: string }) {
+  const setWindowName = useContext(windowContext).setWindowName;
+  useEffect(() => setWindowName('Edit'), []);
+
   const [textPad, setTextPad] = useState<FullPadding>([0, 0, 0, 0]);
   const [linesPad, setLinesPad] = useState<FullPadding>([0, 0, 0, 0]);
   const actualTextRef = useRef<Paragraph>(null);

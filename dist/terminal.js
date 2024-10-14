@@ -3,7 +3,10 @@ import XTerm from '@xterm/headless';
 import { useContext, useEffect, useRef, useState } from 'react';
 import nodePty from 'node-pty';
 import { minitelContext, useKeyboard } from 'minitel-react';
+import { windowContext } from './app.js';
 export function Term() {
+    const setWindowName = useContext(windowContext).setWindowName;
+    useEffect(() => setWindowName('Terminal'), []);
     const minitel = useContext(minitelContext);
     const xtermRef = useRef();
     const ptyRef = useRef();

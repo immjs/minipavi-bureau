@@ -3,8 +3,12 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import nodePty, { IPty } from 'node-pty';
 import { minitelContext, useKeyboard } from 'minitel-react';
 import { hostname } from 'os';
+import { windowContext } from './app.js';
 
 export function Term() {
+  const setWindowName = useContext(windowContext).setWindowName;
+  useEffect(() => setWindowName('Terminal'), []);
+
   const minitel = useContext(minitelContext);
   const xtermRef = useRef<Terminal>();
   const ptyRef = useRef<IPty>();

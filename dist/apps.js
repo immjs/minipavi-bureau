@@ -14,4 +14,14 @@ export const apps = [
         path: '/edit',
         description: 'Text Editor',
     },
+    {
+        name: 'clock',
+        path: '/clock',
+        description: 'Clock app',
+    },
+    {
+        name: 'slides',
+        path: '/slides',
+        description: 'Slides app',
+    },
 ];

@@ -1,11 +1,12 @@
 import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
 import { common, createLowlight } from 'lowlight';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import sheets from './lowlight.js';
 import { useLocation, useNavigate } from 'react-router';
 import { createId } from '@paralleldrive/cuid2';
 import { readFile, writeFile } from 'fs/promises';
 import { useKeyboard } from 'minitel-react';
+import { windowContext } from './app.js';
 const lowlight = createLowlight(common);
 export function Visit({ code, sheet }) {
     const newChildren = [];
@@ -47,6 +48,8 @@ export function Visit({ code, sheet }) {
     }
 }
 function Editor({ path }) {
+    const setWindowName = useContext(windowContext).setWindowName;
+    useEffect(() => setWindowName('Edit'), []);
     const [textPad, setTextPad] = useState([0, 0, 0, 0]);
     const [linesPad, setLinesPad] = useState([0, 0, 0, 0]);
     const actualTextRef = useRef(null);

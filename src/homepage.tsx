@@ -1,10 +1,13 @@
 import { useKeyboard } from "minitel-react";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { apps } from "./apps.js";
-import { windowingContext } from "./app.js";
+import { windowContext, windowingContext } from "./app.js";
 import { useNavigate } from "react-router";
 
 export function Homepage() {
+  const setWindowName = useContext(windowContext).setWindowName;
+  useEffect(() => setWindowName('Homepage'), []);
+
   const [userInput, setUserInput] = useState('');
 
   const navigate = useNavigate();

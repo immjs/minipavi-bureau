@@ -1,4 +1,4 @@
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router";
 import { Finder } from "./finder.js";
 import { Edit } from "./edit.js";
 import { createContext, Dispatch, SetStateAction, useContext, useEffect, useRef, useState } from "react";
@@ -7,32 +7,54 @@ import { Homepage } from "./homepage.js";
 import { ContainerAttributes } from "minitel-standalone";
 import { MinitelObject } from "minitel-standalone/dist/abstract/minitelobject.js";
 import { Term } from "./terminal.js";
+import { Clock } from "./clock.js";
+import { SlidesApp } from "./slides/slides.js";
+import { ImgViewApp } from "./imgview.js";
 
 interface WindowContext {
-  id: number;
+  setWindowName: (windowName: string) => void;
 }
 export const windowContext = createContext<WindowContext>(null as unknown as WindowContext);
 
-function Window({ url, ...props }: { url: string } & Partial<ContainerAttributes>) {
+function WindowInner() {
+  const navigate = useNavigate();
+
+  useKeyboard((v) => v === '\x13E' && navigate(-1));
+
+  return (
+    <Routes>
+      <Route path="/finder" element={<Finder />} />
+      <Route path="/edit" element={<Edit />} />
+      <Route path="/clock" element={<Clock />} />
+      <Route path="/slides" element={<SlidesApp />} />
+      <Route path="/imgview" element={<ImgViewApp />} />
+      <Route path="/term" element={<Term />} />
+      <Route path="/" element={<Homepage />} />
+    </Routes>
+  );
+}
+
+function Window({ name, id, setWindowing, ...props }: { name: string, id: number, setWindowing: TypeofWindowingContext[1] } & Partial<ContainerAttributes>) {
+  function setWindowName(windowName: string) {
+    setWindowing((windowing) => windowing.map((v) => ({ ...v, name: v.id === id ? windowName : v.name })));
+  }
   if (!props.visible) {
     props.fillChar = '\x09';
   }
+
   return (
     <cont {...props}>
-      <MemoryRouter initialEntries={[url]}>
-        <Routes>
-          <Route path="/finder" element={<Finder />} />
-          <Route path="/edit" element={<Edit />} />
-          <Route path="/term" element={<Term />} />
-          <Route path="/" element={<Homepage />} />
-        </Routes>
-      </MemoryRouter>
+      <windowContext.Provider value={{ setWindowName }}>
+        <MemoryRouter initialEntries={["/"]}>
+          <WindowInner />
+        </MemoryRouter>
+      </windowContext.Provider>
     </cont>
   );
 }
 
 interface WindowData {
-  url: string;
+  name: string;
   id: number;
   visible: boolean;
 }
@@ -59,7 +81,7 @@ function WindowItems({ setWmState }: { setWmState: Dispatch<SetStateAction<Windo
           setSubfocusAt(newSubfocusAt);
           setWindowing((windowing) => {
             windowing.forEach((v) => { v.visible = false; });
-            if (newSubfocusAt in windowing) windowing[newSubfocusAt - 1].visible = true;
+            if (newSubfocusAt in windowing) windowing[newSubfocusAt].visible = true;
             return [...windowing];
           });
           break;
@@ -78,13 +100,19 @@ function WindowItems({ setWmState }: { setWmState: Dispatch<SetStateAction<Windo
           setWindowing((windowing) => {
             windowing.forEach((v) => { v.visible = false; });
             if (subfocusAt === windowing.length) {
-              windowing.push({ id: Date.now(), url: '/', visible: true });
+              windowing.push({ id: Date.now(), name: 'New Window', visible: true });
             } else {
               windowing[subfocusAt].visible = true;
             }
             return [...windowing];
           });
           setWmState(WindowStates.VIEWING_CURRENT_WINDOW);
+          break;
+        }
+        case '\x13\x47': {
+          if (windowing.length < 1) break;
+          setWindowing((windowing) => windowing.filter((_, i) => i !== subfocusAt));
+          break;
         }
       }
     }
@@ -95,7 +123,7 @@ function WindowItems({ setWmState }: { setWmState: Dispatch<SetStateAction<Windo
       <focus autofocus onFocus={() => setHasFocus(true)} onBlur={() => setHasFocus(false)}>
         <yjoin widthAlign="stretch" invert={false}>
           {
-            windowing.map((v, i) => <WindowItem name={v.url} hasFocus={subfocusAt === i} key={i} />)
+            windowing.map((v, i) => <WindowItem name={v.name} hasFocus={subfocusAt === i} key={i} />)
           }
           <WindowItem name="New window" hasFocus={subfocusAt === windowing.length} />
         </yjoin>
@@ -122,7 +150,7 @@ export function App() {
   const [windowing, setWindowing] = useState<WindowData[]>([
     {
       id: Date.now(),
-      url: '/',
+      name: '/',
       visible: true,
     },
   ]);
@@ -148,8 +176,10 @@ export function App() {
         {
           windowing.map((v, i) => (
             <Window
+              setWindowing={setWindowing}
               key={v.id}
-              url={v.url}
+              name={v.name}
+              id={v.id}
               disabled={!v.visible || wmState === WindowStates.SWITCHING_WINDOWS}
               visible={v.visible}
             />

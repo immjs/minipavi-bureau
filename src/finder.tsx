@@ -1,13 +1,13 @@
 import { Stats } from "fs";
-import { lstat, readdir } from "fs/promises";
+import { lstat, mkdir, readdir, writeFile } from "fs/promises";
 import { useKeyboard } from "minitel-react";
-import { TextNode } from "minitel-standalone";
 import { MinitelObject } from "minitel-standalone/dist/abstract/minitelobject.js";
-import { join } from "path";
-import { useEffect, useRef, useState } from "react";
-import { Navigate, useLocation } from "react-router";
+import path, { join } from "path";
+import { useContext, useEffect, useRef, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router";
+import { windowContext } from "./app.js";
 
-function FinderItem({ name, isLink, isDir, hasFocus }: { name: string; isLink: boolean, isDir: boolean, hasFocus: boolean }) {
+function FinderItem({ name, isLink, isDir, hasFocus, noBlink }: { name: string; isLink: boolean, isDir: boolean, hasFocus: boolean, noBlink: boolean }) {
   const stuff = useRef<MinitelObject>(null);
 
   useEffect(() => {
@@ -20,14 +20,22 @@ function FinderItem({ name, isLink, isDir, hasFocus }: { name: string; isLink: b
     <para
       ref={stuff}
       invert={hasFocus}
+      noBlink={noBlink}
     >
       {`${name === '..' ? '^^^' : isLink ? '[>]' : isDir ? '[ ]' : ' * '} ${name === '..' ? 'Up a dir' : name}`}
     </para>
   );
 }
 
+enum FinderStates {
+  CREATING_FILE,
+  CREATING_DIR,
+  DEFAULT,
+}
+
 export function Finder() {
-  // return <para>AAAA</para>;
+  const setWindowName = useContext(windowContext).setWindowName;
+  useEffect(() => setWindowName('Finder'), []);
 
   const [hasFocus, setHasFocus] = useState(false);
   const [focusedFile, setFocusedFile] = useState(0);
@@ -35,7 +43,9 @@ export function Finder() {
   const [currPath, setCurrPath] = useState<string | null>(null);
   // const [currPathTmp, setCurrPathTmp] = useState(currPath);
 
-  const [redirectTo, setRedirectTo] = useState<null | string>(null);
+  const [appState, setAppState] = useState<FinderStates>(FinderStates.DEFAULT);
+
+  const navigate = useNavigate();
 
   const params = new URLSearchParams(useLocation().search);
 
@@ -65,30 +75,131 @@ export function Finder() {
     }
   }, [currPath]);
 
+  const [isCreating, setIsCreating] = useState(false);
+  const [newFilename, setNewFilename] = useState('');
+
   useKeyboard((v) => {
     if (!currPath) return;
-    switch (hasFocus && v) {
+    if (appState === FinderStates.CREATING_FILE) {
+      switch (v) {
+        case '\x13\x41':
+          if (newFilename === '') { setAppState(FinderStates.DEFAULT); return; }
+          (async () => {
+            setIsCreating(true);
+            await writeFile(join(currPath, newFilename), '');
+            setNewFilename('');
+            setIsCreating(false);
+            setAppState(FinderStates.DEFAULT);
+          })();
+          break;
+      }
+      return;
+    }
+    if (appState === FinderStates.CREATING_DIR) {
+      switch (v) {
+        case '\x13\x41':
+          if (newFilename === '') { setAppState(FinderStates.DEFAULT); return; }
+          (async () => {
+            setIsCreating(true);
+            await mkdir(join(currPath, newFilename));
+            setNewFilename('');
+            setIsCreating(false);
+            setAppState(FinderStates.DEFAULT);
+          })();
+          break;
+      }
+      return;
+    }
+    if (!hasFocus) return;
+    switch (v) {
       case '\x1b[\x42': {
-        setFocusedFile(Math.min(focusedFile + 1, currFiles.length - 1));
+        setFocusedFile((focusedFile + 1) % currFiles.length);
         break;
       }
       case '\x1b[\x41': {
-        setFocusedFile(Math.max(focusedFile - 1, 0));
+        setFocusedFile(((focusedFile - 1) % currFiles.length + currFiles.length) % currFiles.length);
+        break;
+      }
+      case '\x0e': {
+        setAppState(FinderStates.CREATING_FILE);
+        break;
+      }
+      case '\x04': {
+        setAppState(FinderStates.CREATING_DIR);
         break;
       }
       case '\x13\x41': {
         const newPath = join(currPath, currFiles[focusedFile].name);
         if (!currFiles[focusedFile].isDir && !currFiles[focusedFile].isLink) {
-          setRedirectTo(`/edit?path=${encodeURIComponent(newPath)}`);
+          const fileext = path.extname(newPath);
+          switch (fileext.toLowerCase()) {
+            case '.msld':
+              return navigate(`/slides?path=${encodeURIComponent(newPath)}`);
+            case '.png':
+              return navigate(`/imgview?path=${encodeURIComponent(newPath)}`);
+          }
+          navigate(`/edit?path=${encodeURIComponent(newPath)}`);
           break;
         }
+        navigate(`/finder?path=${newPath}`, { replace: true });
+        setCurrPath(newPath);
+        break;
+      }
+      case '\r': {
+        const newPath = join(currPath, currFiles[focusedFile].name);
+        if (!currFiles[focusedFile].isDir && !currFiles[focusedFile].isLink) {
+          navigate(`/edit?path=${encodeURIComponent(newPath)}`);
+          break;
+        }
+        navigate(`/finder?path=${newPath}`, { replace: true });
         setCurrPath(newPath);
         break;
       }
     }
   });
 
-  if (redirectTo) return <Navigate to={redirectTo} />;
+  if (appState === FinderStates.CREATING_FILE) {
+    return (
+      <yjoin widthAlign="stretch">
+        <para bg={7} fg={0} textAlign='middle' pad={[0, 1]}>Homepage</para>
+        <yjoin flexGrow widthAlign="middle" heightAlign="middle" pad={2} bg={4}>
+          <yjoin widthAlign="stretch" width={24} gap={1} disabled={isCreating}>
+            <yjoin>
+              <xjoin widthAlign="end" pad={1} bg={5}><para>{currPath}</para></xjoin>
+              <yjoin widthAlign="stretch" bg={6} fg={0} pad={1}>
+                <span>New file name</span>
+                <input autofocus onChange={(v) => setNewFilename(v)} />
+              </yjoin>
+            </yjoin>
+            <para pad={1} bg={5} textAlign="middle">
+              <span invert>[ENVOI]</span> Create file
+            </para>
+          </yjoin>
+        </yjoin>
+      </yjoin>
+    );
+  }
+  if (appState === FinderStates.CREATING_DIR) {
+    return (
+      <yjoin widthAlign="stretch">
+        <para bg={7} fg={0} textAlign='middle' pad={[0, 1]}>Homepage</para>
+        <yjoin flexGrow widthAlign="middle" heightAlign="middle" pad={2} bg={4}>
+          <yjoin widthAlign="stretch" width={24} gap={1} disabled={isCreating}>
+            <yjoin>
+              <xjoin widthAlign="end" pad={1} bg={5}><para>{currPath}</para></xjoin>
+              <yjoin widthAlign="stretch" bg={6} fg={0} pad={1}>
+                <span>New directory name</span>
+                <input autofocus onChange={(v) => setNewFilename(v)} />
+              </yjoin>
+            </yjoin>
+            <para pad={1} bg={5} textAlign="middle">
+              <span invert>[ENVOI]</span> Create dir
+            </para>
+          </yjoin>
+        </yjoin>
+      </yjoin>
+    );
+  }
 
   return (
     <yjoin widthAlign="stretch">
@@ -105,6 +216,7 @@ export function Finder() {
                     isLink={v.isLink}
                     isDir={v.isDir}
                     hasFocus={i === focusedFile}
+                    noBlink={!(hasFocus && i === focusedFile)}
                     key={v.name}
                   />
                 ))
