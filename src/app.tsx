@@ -10,6 +10,8 @@ import { Term } from "./terminal.js";
 import { Clock } from "./clock.js";
 import { SlidesApp } from "./slides/slides.js";
 import { ImgViewApp } from "./imgview.js";
+import { MirrorApp } from "./mirroring/primary.js";
+import { VideoApp } from "./video.js";
 
 interface WindowContext {
   setWindowName: (windowName: string) => void;
@@ -26,6 +28,8 @@ function WindowInner() {
       <Route path="/finder" element={<Finder />} />
       <Route path="/edit" element={<Edit />} />
       <Route path="/clock" element={<Clock />} />
+      <Route path="/mirror" element={<MirrorApp />} />
+      <Route path="/video" element={<VideoApp />} />
       <Route path="/slides" element={<SlidesApp />} />
       <Route path="/imgview" element={<ImgViewApp />} />
       <Route path="/term" element={<Term />} />

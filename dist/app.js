@@ -9,11 +9,13 @@ import { Term } from "./terminal.js";
 import { Clock } from "./clock.js";
 import { SlidesApp } from "./slides/slides.js";
 import { ImgViewApp } from "./imgview.js";
+import { MirrorApp } from "./mirroring/primary.js";
+import { VideoApp } from "./video.js";
 export const windowContext = createContext(null);
 function WindowInner() {
     const navigate = useNavigate();
     useKeyboard((v) => v === '\x13E' && navigate(-1));
-    return (_jsxs(Routes, { children: [_jsx(Route, { path: "/finder", element: _jsx(Finder, {}) }), _jsx(Route, { path: "/edit", element: _jsx(Edit, {}) }), _jsx(Route, { path: "/clock", element: _jsx(Clock, {}) }), _jsx(Route, { path: "/slides", element: _jsx(SlidesApp, {}) }), _jsx(Route, { path: "/imgview", element: _jsx(ImgViewApp, {}) }), _jsx(Route, { path: "/term", element: _jsx(Term, {}) }), _jsx(Route, { path: "/", element: _jsx(Homepage, {}) })] }));
+    return (_jsxs(Routes, { children: [_jsx(Route, { path: "/finder", element: _jsx(Finder, {}) }), _jsx(Route, { path: "/edit", element: _jsx(Edit, {}) }), _jsx(Route, { path: "/clock", element: _jsx(Clock, {}) }), _jsx(Route, { path: "/mirror", element: _jsx(MirrorApp, {}) }), _jsx(Route, { path: "/video", element: _jsx(VideoApp, {}) }), _jsx(Route, { path: "/slides", element: _jsx(SlidesApp, {}) }), _jsx(Route, { path: "/imgview", element: _jsx(ImgViewApp, {}) }), _jsx(Route, { path: "/term", element: _jsx(Term, {}) }), _jsx(Route, { path: "/", element: _jsx(Homepage, {}) })] }));
 }
 function Window({ name, id, setWindowing, ...props }) {
     function setWindowName(windowName) {

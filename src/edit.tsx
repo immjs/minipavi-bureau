@@ -109,8 +109,8 @@ function Editor({ path }: { path: string }) {
   return (
     <yjoin widthAlign="stretch">
       <para bg={7} fg={0} textAlign='middle' pad={[0, 1]}>Text editor{isNewFile ? ' (New file)' : ''}</para>
-      <cont flexGrow pad={[1, 2]} bg={4}>
-        <xjoin pad={1} bg={0}>
+      <cont flexGrow bg={4}>
+        <xjoin bg={0}>
           <para width={3} textAlign="end" invert ref={linesRef} pad={linesPad}>{Array.from({ length: fileContents.split('\n').length }, (_, i) => `${i}`).join('\n')}</para>
           {/* <para width={1} fillChar="|"></para> */}
           <zjoin flexGrow>

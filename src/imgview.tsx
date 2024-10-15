@@ -1,4 +1,3 @@
-import { readFile } from "fs/promises";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import sharp, { Sharp } from "sharp";

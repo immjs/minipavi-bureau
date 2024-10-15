@@ -1,18 +1,24 @@
+import { Minitel } from "minitel-standalone";
 import { Duplex, Writable } from "stream";
+
+type ENU = Error | null | undefined;
 
 export class Mirror extends Duplex {
   duplexIn: Duplex;
-  writableOut: Writable;
+  writablesOut: Set<Writable>;
 
-  constructor(duplexIn: Duplex, writableOut: Writable) {
+  mapping: Record<string, Set<Writable>>;
+
+  constructor(duplexIn: Duplex) {
     super({ decodeStrings: false });
     this.duplexIn = duplexIn;
-    this.writableOut = writableOut;
+    this.writablesOut = new Set<Writable>();
+    this.mapping = {};
 
     this.duplexIn.once(
       'close',
       function (this: Mirror) {
-        this.writableOut.emit('close');
+        this.writablesOut.forEach((v) => v.emit('close'));
         this.emit('close');
       }.bind(this),
     );
@@ -20,22 +26,31 @@ export class Mirror extends Duplex {
       this.push(this.duplexIn.read()),
     );
   }
+  
+  addAs(name: string, stream: Writable) {
+    if (!(name in this.mapping)) this.mapping[name] = new Set<Writable>();
+    this.mapping[name].add(stream);
+
+    this.writablesOut.add(stream);
+  }
 
   _write(
     chunk: any,
     bufferEncoding: BufferEncoding,
-    callback: (err: Error | null | undefined) => void,
+    callback: (err: ENU) => void,
   ): void {
-    Promise.all<Error | null | undefined>([
-      new Promise<Error | null | undefined>((r) => this.duplexIn.write(chunk, bufferEncoding, r)),
-      !this.writableOut.writableEnded
-      ? new Promise<Error | null | undefined>((r) => this.writableOut.write(chunk, bufferEncoding, r))
-      : Promise.resolve(null),
-    ]).then((err) => callback(err[0] ?? err[1]))
+    // console.log(chunk);
+    Promise.all<ENU>([
+      new Promise<ENU>((r) => this.duplexIn.write(chunk, bufferEncoding, r)),
+      ...[...this.writablesOut].map((v) => !v.writableEnded
+        ? new Promise<ENU>((r) => v.write(chunk, bufferEncoding, r))
+        : Promise.resolve(null)),
+    ])
+      .then((err) => callback(err.find((v) => v != null)));
   }
   _read(size?: number) {
     return this.duplexIn.read(size);
   }
 }
 
-export const mirroringStore: Record<string, Mirror> = {};
+export const mirroringStore: Record<string, Minitel> = {};

@@ -20,6 +20,16 @@ export const apps = [
         description: 'Clock app',
     },
     {
+        name: 'mirror',
+        path: '/mirror',
+        description: 'Screen mirroring',
+    },
+    {
+        name: 'video',
+        path: '/video',
+        description: 'Demo video',
+    },
+    {
         name: 'slides',
         path: '/slides',
         description: 'Slides app',

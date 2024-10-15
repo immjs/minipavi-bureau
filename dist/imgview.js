@@ -39,6 +39,5 @@ function ImgView({ path }) {
             setMosaicData(await sharpHandler(sharp(path).resize(80, 72)));
         })();
     }, [path]);
-    // console.log(mosaicData, path);
     return (_jsxs("yjoin", { flexGrow: true, widthAlign: "stretch", children: [_jsx("para", { bg: 7, fg: 0, textAlign: 'middle', pad: [0, 1], children: "Slides" }), _jsx("scroll", { overflowX: "auto", overflowY: "auto", children: _jsx("image", { imageData: mosaicData, flexGrow: true }) })] }));
 }
