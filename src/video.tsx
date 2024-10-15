@@ -125,7 +125,7 @@ export function VideoApp() {
       }
     })();
 
-    return () => stopped = true;
+    return () => { stopped = true };
   }, []);
 
   return (

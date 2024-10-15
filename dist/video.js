@@ -7,6 +7,7 @@ export function VideoApp() {
     const minitel = useContext(minitelContext);
     const [curFrame, setCurFrame] = useState([[[0, 0, 0]]]);
     useEffect(() => {
+        let stopped = false;
         (async () => {
             ffmpeg.setFfmpegPath('/usr/bin/ffmpeg');
             let playingAt = false;
@@ -104,9 +105,11 @@ export function VideoApp() {
                     await new Promise((r) => setTimeout(() => r(), (1000 / frameRate / 2)));
                 }
                 // await minitel.lastRender;
-                play();
+                if (!stopped)
+                    play();
             };
         })();
+        return () => { stopped = true; };
     }, []);
     return (_jsxs("yjoin", { children: [_jsx("para", { bg: 7, fg: 0, textAlign: 'middle', pad: [0, 1], children: "Video player" }), _jsx("xjoin", { bg: 5, widthAlign: 'middle', heightAlign: 'middle', children: _jsx("image", { imageData: curFrame }) })] }));
 }
